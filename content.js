@@ -67,17 +67,23 @@ class Clicker {
 
   // Checks for skip/close buttons.
   check() {
-    this.click('.ytp-ad-overlay-close-button');
-    this.click('.ytp-ad-skip-button');
-    this.lastCheckTime = new Date().getTime();
-  }
+    for (const sel of ['.ytp-ad-overlay-close-button', '.ytp-ad-skip-button']) {
+      const el = this.player.querySelector(sel);
+      if (el) {
+        console.log(`Clicking ${sel}`);
+        el.click();
+      }
+    }
 
-  // Clicks the element matched by |sel| (if any).
-  click(sel) {
-    const el = this.player.querySelector(sel);
-    if (!el) return;
-    console.log(`Clicking ${sel}`);
-    el.click();
+    if (document.querySelector('.ytp-ad-preview-container')) {
+      const video = document.querySelector('video.video-stream');
+      if (video) {
+        console.log('Jumping to end of video');
+        video.currentTime = video.duration;
+      }
+    }
+
+    this.lastCheckTime = new Date().getTime();
   }
 }
 
