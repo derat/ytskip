@@ -75,7 +75,10 @@ class Clicker {
       }
     }
 
-    if (document.querySelector('.ytp-ad-preview-container')) {
+    if (
+      document.querySelector('.ytp-ad-preview-container') &&
+      !document.querySelector('.ytp-ad-skip-button')
+    ) {
       const video = document.querySelector('video.video-stream');
       if (video) {
         console.log('Jumping to end of video');
