@@ -46,6 +46,7 @@ class Clicker {
         childList: true,
         subtree: true,
       });
+      this.onPlayerMutation();
     }
   }
 
