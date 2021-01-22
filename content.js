@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// Delay before initially looking for the player. It seems like there's a race
+// sometimes where ytd-app exists but ytd-player doesn't (especially when
+// loading a tab in the background?).
+const initialCheckDelayMs = 500;
+
 // Minimum duration between evaluating the page state due to DOM mutations.
 const mutationDebounceMs = 100;
 
@@ -22,9 +27,10 @@ class Clicker {
       attributes: true,
       atributeFilter: ['is-watch-page'],
     });
+    console.log('Observing app for changes');
 
     // Handle a watch page being loaded directly.
-    this.onAppMutation();
+    window.setTimeout(() => this.onAppMutation(), initialCheckDelayMs);
   }
 
   // Handles mutations to the ytd-app element (used to detect navigation to or
