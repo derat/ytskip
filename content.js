@@ -2,10 +2,8 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Delay before initially looking for the player. It seems like there's a race
-// sometimes where ytd-app exists but ytd-player doesn't (especially when
-// loading a tab in the background?).
-const initialCheckDelayMs = 500;
+// Delay before looking for the player again when it's missing.
+const findPlayerRetryMs = 200;
 
 // Minimum duration between evaluating the page state due to DOM mutations.
 const mutationDebounceMs = 100;
@@ -17,26 +15,26 @@ class Clicker {
     this.checkTimeoutId = undefined;
 
     this.player = undefined;
-    this.playerObserver = new MutationObserver(m => this.onPlayerMutation());
+    this.playerObserver = new MutationObserver((m) => this.onPlayerMutation());
 
     // Observe the main ytd-app element for page changes.
-    this.app = document.querySelector('ytd-app');
-    if (!this.app) throw new Error('Failed to find ytd-app element');
-    this.appObserver = new MutationObserver(m => this.onAppMutation());
+    this.app = document.querySelector("ytd-app");
+    if (!this.app) throw new Error("Failed to find ytd-app element");
+    this.appObserver = new MutationObserver((m) => this.onAppMutation());
     this.appObserver.observe(this.app, {
       attributes: true,
-      atributeFilter: ['is-watch-page'],
+      atributeFilter: ["is-watch-page"],
     });
-    console.log('Observing app for changes');
+    console.log("Observing app for changes");
 
     // Handle a watch page being loaded directly.
-    window.setTimeout(() => this.onAppMutation(), initialCheckDelayMs);
+    window.setTimeout(() => this.onAppMutation());
   }
 
   // Handles mutations to the ytd-app element (used to detect navigation to or
   // from a /watch page).
   onAppMutation() {
-    const player = document.querySelector('ytd-player');
+    const player = document.querySelector("ytd-player");
     if (player && this.player === player) return; // already watching player
 
     this.player = player;
@@ -47,12 +45,17 @@ class Clicker {
     }
 
     if (this.player) {
-      console.log('Observing player for changes');
+      console.log("Observing player for changes");
       this.playerObserver.observe(this.player, {
         childList: true,
         subtree: true,
       });
       this.onPlayerMutation();
+    } else if (!!this.app.getAttribute("is-watch-page")) {
+      // It seems like there's a race sometimes where ytd-app exists but
+      // ytd-player doesn't (especially when loading a tab in the background?).
+      // Look again in a bit.
+      window.setTimeout(() => this.onAppMutation(), findPlayerRetryMs);
     }
   }
 
@@ -74,7 +77,7 @@ class Clicker {
 
   // Checks for skip/close buttons.
   check() {
-    for (const sel of ['.ytp-ad-overlay-close-button', '.ytp-ad-skip-button']) {
+    for (const sel of [".ytp-ad-overlay-close-button", ".ytp-ad-skip-button"]) {
       const el = this.player.querySelector(sel);
       if (el) {
         console.log(`Clicking ${sel}`);
@@ -83,12 +86,12 @@ class Clicker {
     }
 
     if (
-      document.querySelector('.ytp-ad-preview-container') &&
-      !document.querySelector('.ytp-ad-skip-button')
+      document.querySelector(".ytp-ad-preview-container") &&
+      !document.querySelector(".ytp-ad-skip-button")
     ) {
-      const video = document.querySelector('video.video-stream');
+      const video = document.querySelector("video.video-stream");
       if (video) {
-        console.log('Jumping to end of video');
+        console.log("Jumping to end of video");
         video.currentTime = video.duration;
       }
     }
@@ -97,4 +100,4 @@ class Clicker {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => new Clicker());
+document.addEventListener("DOMContentLoaded", () => new Clicker());
