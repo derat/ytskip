@@ -51,10 +51,11 @@ class Clicker {
         subtree: true,
       });
       this.onPlayerMutation();
-    } else if (!!this.app.getAttribute("is-watch-page")) {
+    } else if (this.app.getAttribute("is-watch-page") !== null) {
       // It seems like there's a race sometimes where ytd-app exists but
       // ytd-player doesn't (especially when loading a tab in the background?).
       // Look again in a bit.
+      console.log("Didn't find player yet");
       window.setTimeout(() => this.onAppMutation(), findPlayerRetryMs);
     }
   }
