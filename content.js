@@ -76,9 +76,16 @@ class Clicker {
     }
   }
 
-  // Checks for skip/close buttons.
+  // Checks for skip/close buttons and clicks them.
   check() {
-    for (const sel of [".ytp-ad-overlay-close-button", ".ytp-ad-skip-button"]) {
+    for (const sel of [
+      // Banner ad.
+      ".ytp-ad-overlay-close-button",
+      // Skip button during video ads.
+      ".ytp-ad-skip-button",
+      // Subscription promo across bottom of screen.
+      "ytd-mealbar-promo-renderer #dismiss-button a",
+    ]) {
       const el = this.player.querySelector(sel);
       if (el) {
         console.log(`Clicking ${sel}`);
