@@ -10,5 +10,9 @@
       "run_at": "document_start",
       "js": ["content.js"]
     }
-  ]
+  ],
+  "icons": {
+    "48": "icon-48.png",
+    "128": "icon-128.png"
+  }
 }
