@@ -18,6 +18,7 @@ class Clicker {
     this.playerObserver = new MutationObserver((m) => this.onPlayerMutation());
 
     // Observe the main ytd-app element for page changes.
+    // TODO: I'm not sure if is-watch-page gets set anymore.
     this.app = document.querySelector("ytd-app");
     if (!this.app) throw new Error("Failed to find ytd-app element");
     this.appObserver = new MutationObserver((m) => this.onAppMutation());
@@ -51,7 +52,10 @@ class Clicker {
         subtree: true,
       });
       this.onPlayerMutation();
-    } else if (this.app.getAttribute("is-watch-page") !== null) {
+    } else if (
+      this.app.getAttribute("is-watch-page") !== null ||
+      window.location.pathname === "/watch"
+    ) {
       // It seems like there's a race sometimes where ytd-app exists but
       // ytd-player doesn't (especially when loading a tab in the background?).
       // Look again in a bit.
