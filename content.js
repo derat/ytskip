@@ -88,7 +88,7 @@ class Clicker {
       // Skip button during video ads.
       ".ytp-ad-skip-button",
       // Subscription promo across bottom of screen.
-      "ytd-mealbar-promo-renderer #dismiss-button a",
+      ".ytd-mealbar-promo-renderer #dismiss-button a",
     ]) {
       const el = this.player.querySelector(sel);
       if (el) {
