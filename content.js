@@ -14,19 +14,19 @@ class Clicker {
     this.lastCheckTime = 0;
     this.checkTimeoutId = undefined;
 
-    this.player = undefined;
+    this.players = new Set();
     this.playerObserver = new MutationObserver((m) => this.onPlayerMutation());
 
     // Observe the main ytd-app element for page changes.
     // TODO: I'm not sure if is-watch-page gets set anymore.
-    this.app = document.querySelector("ytd-app");
-    if (!this.app) throw new Error("Failed to find ytd-app element");
+    this.app = document.querySelector('ytd-app');
+    if (!this.app) throw new Error('Failed to find ytd-app element');
     this.appObserver = new MutationObserver((m) => this.onAppMutation());
     this.appObserver.observe(this.app, {
       attributes: true,
-      atributeFilter: ["is-watch-page"],
+      atributeFilter: ['is-watch-page'],
     });
-    console.log("Observing app for changes");
+    console.log('Observing app');
 
     // Handle a watch page being loaded directly.
     window.setTimeout(() => this.onAppMutation());
@@ -35,26 +35,31 @@ class Clicker {
   // Handles mutations to the ytd-app element (used to detect navigation to or
   // from a /watch page).
   onAppMutation() {
-    const player = document.querySelector("ytd-player");
-    if (player && this.player === player) return; // already watching player
+    const players = new Set(
+      Array.from(document.querySelectorAll('ytd-player'))
+    );
+    if (players.size && setsEqual(players, this.players)) return;
 
-    this.player = player;
     this.playerObserver.disconnect();
+    this.players = players;
+    this.players.forEach((p) =>
+      this.playerObserver.observe(p, {
+        childList: true,
+        subtree: true,
+      })
+    );
+
     if (this.checkTimeoutId !== undefined) {
       window.clearTimeout(this.checkTimeoutId);
       this.checkTimeoutId = undefined;
     }
 
-    if (this.player) {
-      console.log("Observing player for changes");
-      this.playerObserver.observe(this.player, {
-        childList: true,
-        subtree: true,
-      });
+    if (this.players.size) {
+      console.log(`Observing ${this.players.size} player(s)`);
       this.onPlayerMutation();
     } else if (
-      this.app.getAttribute("is-watch-page") !== null ||
-      window.location.pathname === "/watch"
+      this.app.getAttribute('is-watch-page') !== null ||
+      window.location.pathname === '/watch'
     ) {
       // It seems like there's a race sometimes where ytd-app exists but
       // ytd-player doesn't (especially when loading a tab in the background?).
@@ -84,26 +89,25 @@ class Clicker {
   check() {
     for (const sel of [
       // Banner ad.
-      ".ytp-ad-overlay-close-button",
+      '.ytp-ad-overlay-close-button',
       // Skip button during video ads.
-      ".ytp-ad-skip-button",
+      '.ytp-ad-skip-button',
       // Subscription promo across bottom of screen.
-      ".ytd-mealbar-promo-renderer #dismiss-button a",
+      '.ytd-mealbar-promo-renderer #dismiss-button a',
     ]) {
-      const el = this.player.querySelector(sel);
-      if (el) {
+      document.querySelectorAll(sel).forEach((el) => {
         console.log(`Clicking ${sel}`);
         el.click();
-      }
+      });
     }
 
     if (
-      document.querySelector(".ytp-ad-preview-container") &&
-      !document.querySelector(".ytp-ad-skip-button")
+      document.querySelector('.ytp-ad-preview-container') &&
+      !document.querySelector('.ytp-ad-skip-button')
     ) {
-      const video = document.querySelector("video.video-stream");
+      const video = document.querySelector('video.video-stream');
       if (video) {
-        console.log("Jumping to end of video");
+        console.log('Jumping to end of video');
         video.currentTime = video.duration;
       }
     }
@@ -112,4 +116,10 @@ class Clicker {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => new Clicker());
+function setsEqual(a, b) {
+  if (a.size !== b.size) return false;
+  for (const v of a) if (!b.has(v)) return false;
+  return true;
+}
+
+document.addEventListener('DOMContentLoaded', () => new Clicker());
