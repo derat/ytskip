@@ -2,90 +2,115 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// Delay before looking for the player again when it's missing.
-const findPlayerRetryMs = 200;
-
 // Minimum duration between evaluating the page state due to DOM mutations.
-const mutationDebounceMs = 100;
+const MUTATION_DEBOUNCE_MS = 100;
 
 // Clicks things.
 class Clicker {
+  lastCheckTime = 0; // last time check() as called
+  checkTimeoutId = null; // for check()
+
+  app = document.querySelector('ytd-app');
+  appObserver = new MutationObserver(() => this.onAppMutation());
+
+  progress = null; // initialized by onAppMutation()
+  progressObserver = new MutationObserver(() => {
+    // The Navigation API (https://www.youtube.com/watch?v=cgKUMRPAliw) doesn't
+    // seem to help here, since the 'navigate' event fires before the page
+    // structure has been changed. Watching for the progress bar being hidden is
+    // the best way I've found to detect the completion of internal navigations.
+    if (this.progress.hasAttribute('hidden')) this.handleNavigation();
+  });
+
+  players = new Set(); // ytd-player elements currently being observed
+  playerObserver = new MutationObserver(() => this.onPlayerMutation());
+
   constructor() {
-    this.lastCheckTime = 0;
-    this.checkTimeoutId = undefined;
-
-    this.players = new Set();
-    this.playerObserver = new MutationObserver((m) => this.onPlayerMutation());
-
-    // Observe the main ytd-app element for page changes.
-    // TODO: I'm not sure if is-watch-page gets set anymore.
-    this.app = document.querySelector('ytd-app');
-    if (!this.app) throw new Error('Failed to find ytd-app element');
-    this.appObserver = new MutationObserver((m) => this.onAppMutation());
-    this.appObserver.observe(this.app, {
-      attributes: true,
-      atributeFilter: ['is-watch-page'],
-    });
+    // Observe the main ytd-app element for the progress element showing up.
+    if (!this.app) throw new Error('Failed to find ytd-app');
+    this.appObserver.observe(this.app, { childList: true });
     console.log('Observing app');
 
-    // Handle a watch page being loaded directly.
-    window.setTimeout(() => this.onAppMutation());
+    // Handle the progress element already being there.
+    window.setTimeout(() => {
+      this.onAppMutation();
+      this.handleNavigation();
+    });
   }
 
-  // Handles mutations to the ytd-app element (used to detect navigation to or
-  // from a /watch page).
+  // Handles changes to the ytd-app element's child list.
   onAppMutation() {
-    const players = new Set(
-      Array.from(document.querySelectorAll('ytd-player'))
-    );
-    if (players.size && setsEqual(players, this.players)) return;
+    if (this.progress) return;
 
-    this.playerObserver.disconnect();
-    this.players = players;
-    this.players.forEach((p) =>
-      this.playerObserver.observe(p, {
-        childList: true,
-        subtree: true,
-      })
-    );
-
-    if (this.checkTimeoutId !== undefined) {
-      window.clearTimeout(this.checkTimeoutId);
-      this.checkTimeoutId = undefined;
-    }
-
-    if (this.players.size) {
-      console.log(`Observing ${this.players.size} player(s)`);
-      this.onPlayerMutation();
-    } else if (
-      this.app.getAttribute('is-watch-page') !== null ||
-      window.location.pathname === '/watch'
-    ) {
-      // It seems like there's a race sometimes where ytd-app exists but
-      // ytd-player doesn't (especially when loading a tab in the background?).
-      // Look again in a bit.
-      console.log("Didn't find player yet");
-      window.setTimeout(() => this.onAppMutation(), findPlayerRetryMs);
+    this.progress = document.querySelector('yt-page-navigation-progress');
+    if (this.progress) {
+      console.log('Observing yt-page-navigation-progress');
+      this.progressObserver.observe(this.progress, {
+        attributes: true,
+        attributeFilter: ['hidden'],
+      });
+      this.appObserver.disconnect();
     }
   }
 
-  // Handles mutations to the ytd-player element (used to detect buttons being
-  // added).
+  // Handles internal navigations.
+  handleNavigation() {
+    // Hide various promotions.
+    for (const sel of [
+      // Premium banner at top of home page.
+      'ytd-banner-promo-renderer',
+      // Promoted videos on home page.
+      'ytd-display-ad-renderer',
+      // Promoted search results.
+      'ytd-promoted-sparkles-text-search-renderer',
+      // Promoted suggested videos at bottom of watch page.
+      'ytd-promoted-sparkles-web-renderer',
+    ]) {
+      document.querySelectorAll(sel).forEach((e) => {
+        if (e.style.display === 'none') return;
+        console.log(`Hiding ${sel}`);
+        e.style.display = 'none';
+      });
+    }
+
+    // Check for ytd-player elements being added or removed.
+    const players = new Set([...document.querySelectorAll('ytd-player')]);
+    if (!players.size || !setsEqual(players, this.players)) {
+      this.playerObserver.disconnect();
+      this.players = players;
+      this.players.forEach((p) =>
+        this.playerObserver.observe(p, {
+          childList: true,
+          subtree: true,
+        })
+      );
+      if (this.checkTimeoutId) {
+        window.clearTimeout(this.checkTimeoutId);
+        this.checkTimeoutId = null;
+      }
+      if (this.players.size) {
+        console.log(`Observing ${this.players.size} player(s)`);
+        this.onPlayerMutation();
+      }
+    }
+  }
+
+  // Handles mutations to ytd-player elements' subtrees.
   onPlayerMutation() {
-    if (this.checkTimeoutId !== undefined) return; // already queued
+    if (this.checkTimeoutId) return; // already queued
 
     const elapsed = new Date().getTime() - this.lastCheckTime;
-    if (elapsed >= mutationDebounceMs) {
+    if (elapsed >= MUTATION_DEBOUNCE_MS) {
       this.check();
     } else {
       this.checkTimeoutId = window.setTimeout(() => {
-        this.checkTimeoutId = undefined;
+        this.checkTimeoutId = null;
         this.check();
-      }, mutationDebounceMs - elapsed);
+      }, MUTATION_DEBOUNCE_MS - elapsed);
     }
   }
 
-  // Checks for skip/close buttons and clicks them.
+  // Clicks skip/close buttons.
   check() {
     for (const sel of [
       // Banner ad.
