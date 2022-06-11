@@ -48,6 +48,8 @@ class Clicker {
       'ytd-display-ad-renderer',
       // Promoted search results.
       'ytd-promoted-sparkles-text-search-renderer',
+      // Ads above video title and info on watch page.
+      'ytd-engagement-panel-section-list-renderer',
       // Promoted suggested videos at bottom of watch page.
       'ytd-promoted-sparkles-web-renderer',
       // Promoted videos in search page.
