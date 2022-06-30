@@ -42,6 +42,8 @@ class Clicker {
   check() {
     // Hide promotions.
     for (const sel of [
+      // Ads to right of video info on watch page.
+      'ytd-action-companion-ad-renderer',
       // Premium banner at top of home page.
       'ytd-banner-promo-renderer',
       // Promoted videos on home page.
@@ -69,7 +71,9 @@ class Clicker {
       // Skip button during video ads.
       '.ytp-ad-skip-button',
       // Subscription promo across bottom of screen.
-      '.ytd-mealbar-promo-renderer #dismiss-button a',
+      // TODO: This also matches the resolution selector, unfortunately.
+      // I haven't seen the subscription promo since commenting it out, though.
+      //'.ytd-mealbar-promo-renderer #dismiss-button a',
     ]) {
       document.querySelectorAll(sel).forEach((el) => {
         console.log(`Clicking ${sel}`);

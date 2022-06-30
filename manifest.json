@@ -1,7 +1,7 @@
 {
   "name": "ytskip",
   "short_name": "ytskip",
-  "version": "0.13",
+  "version": "0.14",
   "description": "Clicks buttons on YouTube",
   "manifest_version": 3,
   "content_scripts": [
