@@ -45,7 +45,7 @@ class Clicker {
       // Ads to right of video info on watch page.
       'ytd-action-companion-ad-renderer',
       // Banner ad displayed over bottom of video.
-      'ytp-ad-module',
+      '.ytp-ad-module',
       // Premium banner at top of home page.
       'ytd-banner-promo-renderer',
       // Promoted videos on home page.

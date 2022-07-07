@@ -1,7 +1,7 @@
 {
   "name": "ytskip",
   "short_name": "ytskip",
-  "version": "0.15",
+  "version": "0.16",
   "description": "Hides ads and clicks skip buttons on YouTube",
   "manifest_version": 3,
   "content_scripts": [
