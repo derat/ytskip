@@ -7,7 +7,7 @@ const MUTATION_DEBOUNCE_MS = 100;
 
 // Clicks things.
 class Clicker {
-  lastCheckTime = 0; // last time check() as called
+  lastCheckTime = 0; // last time check() was called
   checkTimeoutId = null; // for check()
 
   app = document.querySelector('ytd-app');
@@ -44,14 +44,18 @@ class Clicker {
     for (const sel of [
       // Ads to right of video info on watch page.
       'ytd-action-companion-ad-renderer',
+      // Banner ad displayed over bottom of video.
+      'ytp-ad-module',
       // Premium banner at top of home page.
       'ytd-banner-promo-renderer',
       // Promoted videos on home page.
       'ytd-display-ad-renderer',
-      // Promoted search results.
-      'ytd-promoted-sparkles-text-search-renderer',
       // Ads above video title and info on watch page.
       'ytd-engagement-panel-section-list-renderer',
+      // Subscription promo across bottom of screen.
+      'ytd-mealbar-promo-renderer',
+      // Promoted search results.
+      'ytd-promoted-sparkles-text-search-renderer',
       // Promoted suggested videos at bottom of watch page.
       'ytd-promoted-sparkles-web-renderer',
       // Promoted videos in search page.
@@ -66,14 +70,8 @@ class Clicker {
 
     // Click buttons.
     for (const sel of [
-      // Banner ad.
-      '.ytp-ad-overlay-close-button',
       // Skip button during video ads.
       '.ytp-ad-skip-button',
-      // Subscription promo across bottom of screen.
-      // TODO: This also matches the resolution selector, unfortunately.
-      // I haven't seen the subscription promo since commenting it out, though.
-      //'.ytd-mealbar-promo-renderer #dismiss-button a',
     ]) {
       document.querySelectorAll(sel).forEach((el) => {
         console.log(`Clicking ${sel}`);
