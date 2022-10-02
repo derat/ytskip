@@ -54,6 +54,7 @@ class Clicker {
       'ytd-engagement-panel-section-list-renderer',
       // Subscription promo across bottom of screen.
       'ytd-mealbar-promo-renderer',
+      'yt-mealbar-promo-renderer', // as of 20221002?
       // Promoted search results.
       'ytd-promoted-sparkles-text-search-renderer',
       // Promoted suggested videos at bottom of watch page.
